@@ -20,7 +20,7 @@ jobs:
           cd custom_components/home_maintenance/
           zip -r ../../home_maintenance.zip . -x '.*'
       - name: Upload ZIP to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: home_maintenance.zip
         env:
