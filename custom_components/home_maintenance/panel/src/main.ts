@@ -11,7 +11,7 @@ import { formatDateNumeric } from "custom-card-helpers";
 import { localize } from '../localize/localize';
 import { VERSION } from "./const";
 import { loadConfigDashboard } from "./helpers";
-import { commonStyle } from './styles'
+import { commonStyle } from './styles';
 import { EntityRegistryEntry, IntegrationConfig, IntervalType, INTERVAL_TYPES, getIntervalTypeLabels, Label, Task, Tag } from './types';
 import { completeTask, getConfig, loadLabelRegistry, loadRegistryEntries, loadTags, loadTask, loadTasks, removeTask, saveTask, updateTask } from './data/websockets';
 
@@ -20,6 +20,7 @@ interface TaskFormData {
     interval_value: number | "";
     interval_type: string;
     last_performed: string;
+    due_time: string;
     icon: string;
     label: string[];
     tag: string;
@@ -41,6 +42,7 @@ export class HomeMaintenancePanel extends LitElement {
         interval_value: "",
         interval_type: "days",
         last_performed: "",
+        due_time: "00:00",
         icon: "",
         label: [],
         tag: "",
@@ -54,6 +56,7 @@ export class HomeMaintenancePanel extends LitElement {
         interval_value: "",
         interval_type: "days",
         last_performed: "",
+        due_time: "00:00",
         icon: "",
         label: [],
         tag: "",
@@ -128,16 +131,21 @@ export class HomeMaintenancePanel extends LitElement {
                 showNarrow: true,
                 sortable: true,
                 direction: "asc",
-                minWidth: "100px",
-                maxWidth: "100px",
+                minWidth: "150px",
+                maxWidth: "150px",
                 template: (task: any) => {
                     const now = new Date();
                     const next = new Date(task.next_due);
                     const isDue = next <= now;
 
+                    // Format time as HH:MM
+                    const hours = next.getHours().toString().padStart(2, '0');
+                    const minutes = next.getMinutes().toString().padStart(2, '0');
+                    const timeStr = `${hours}:${minutes}`;
+
                     return html`
                         <span style=${isDue ? "color: var(--error-color, red); font-weight: bold;" : ""}>
-                            ${formatDateNumeric(next, this.hass!.locale)}
+                            ${formatDateNumeric(next, this.hass!.locale)} ${timeStr}
                         </span>` || "—";
                 },
             },
@@ -237,6 +245,14 @@ export class HomeMaintenancePanel extends LitElement {
                         throw new Error(`Unsupported interval type: ${task.interval_type}`);
                 }
 
+                // Apply the due time if available
+                if (task.due_time) {
+                    const [hours, minutes] = task.due_time.split(":").map(Number);
+                    if (!isNaN(hours) && !isNaN(minutes)) {
+                        next.setHours(hours, minutes, 0, 0);
+                    }
+                }
+
                 return next;
             })(),
             tagIcon: (() => task.tag_id && task.tag_id.trim() !== "" ? "mdi:tag" : undefined)(),
@@ -266,6 +282,7 @@ export class HomeMaintenancePanel extends LitElement {
     private get _advancedSchema() {
         return [
             { name: "last_performed", selector: { date: {} }, },
+            { name: "due_time", selector: { time: {} }, },
             { name: "icon", selector: { icon: {} }, },
             { name: "label", selector: { label: { multiple: true } }, },
             { name: "tag", selector: { entity: { filter: { domain: "tag" } } }, },
@@ -290,6 +307,7 @@ export class HomeMaintenancePanel extends LitElement {
             },
             { type: "constant", name: localize('panel.dialog.edit_task.sections.optional', this.hass!.language), disabled: true },
             { name: "last_performed", selector: { date: {} }, },
+            { name: "due_time", selector: { time: {} }, },
             { name: "icon", selector: { icon: {} }, },
             { name: "label", selector: { label: { multiple: true } }, },
             { name: "tag", selector: { entity: { filter: { domain: "tag" } } }, },
@@ -343,6 +361,7 @@ export class HomeMaintenancePanel extends LitElement {
             interval_value: "",
             interval_type: "days",
             last_performed: "",
+            due_time: "00:00",
             icon: "",
             label: [],
             tag: "",
@@ -357,6 +376,7 @@ export class HomeMaintenancePanel extends LitElement {
             interval_value: "",
             interval_type: "days",
             last_performed: "",
+            due_time: "00:00",
             icon: "",
             label: [],
             tag: "",
@@ -391,8 +411,7 @@ export class HomeMaintenancePanel extends LitElement {
 
         return isoDateStr;
     }
-
-    connectedCallback() {
+  connectedCallback() {
         super.connectedCallback();
         this.loadData();
     }
@@ -528,7 +547,7 @@ export class HomeMaintenancePanel extends LitElement {
     }
 
     private async _handleAddTaskClick() {
-        const { title, interval_value, interval_type, last_performed, tag, icon, label } = this._formData;
+        const { title, interval_value, interval_type, last_performed, due_time, tag, icon, label } = this._formData;
 
         if (!title?.trim() || !interval_value || !interval_type) {
             const msg = localize("panel.cards.new.alerts.required", this.hass!.language);
@@ -541,6 +560,7 @@ export class HomeMaintenancePanel extends LitElement {
             interval_value,
             interval_type,
             last_performed: this.computeISODate(last_performed),
+            due_time: due_time || "00:00",
             tag_id: tag?.trim() || undefined,
             icon: icon?.trim() || "mdi:calendar-check",
             labels: label ?? [],
@@ -551,10 +571,10 @@ export class HomeMaintenancePanel extends LitElement {
             await this.resetForm();
         } catch (error) {
             console.error("Failed to add task:", error);
-            const msg = localize('panel.cards.new.alerts.error', this.hass!.language)
+            const msg = localize('panel.cards.new.alerts.error', this.hass!.language);
             alert(msg);
         }
-    };
+    }
 
     private async _handleCompleteTaskClick(id: string) {
         try {
@@ -579,6 +599,7 @@ export class HomeMaintenancePanel extends LitElement {
                 interval_value: task.interval_value,
                 interval_type: task.interval_type,
                 last_performed: task.last_performed ?? "",
+                due_time: task.due_time ?? "00:00",
                 icon: task.icon ?? "",
                 label: labels.map((l) => l.label_id),
                 tag: task.tag_id ?? "",
@@ -603,6 +624,7 @@ export class HomeMaintenancePanel extends LitElement {
                 interval_value: Number(this._editFormData.interval_value),
                 interval_type: this._editFormData.interval_type,
                 last_performed: lastPerformedISO,
+                due_time: this._editFormData.due_time || "00:00",
                 icon: this._editFormData.icon?.trim() || "mdi:calendar-check",
                 tag_id: this._editFormData.tag || undefined,
                 label_ids: this._editFormData.label,
@@ -620,7 +642,7 @@ export class HomeMaintenancePanel extends LitElement {
     }
 
     private async _handleRemoveTaskClick(id: string) {
-        const msg = localize('panel.cards.current.confirm_remove', this.hass!.language)
+        const msg = localize('panel.cards.current.confirm_remove', this.hass!.language);
         if (!confirm(msg)) return;
         try {
             await removeTask(this.hass!, id);

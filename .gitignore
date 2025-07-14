@@ -13,6 +13,7 @@ package-lock.json
 # misc
 .coverage
 .vscode
+.idea
 coverage.xml
 .ruff_cache
 *.zip

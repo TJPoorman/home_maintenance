@@ -74,8 +74,9 @@ class HomeMaintenanceSensor(BinarySensorEntity):
         """Return the icon for the task."""
         return self.task.get("icon", "mdi:calendar-check")
 
+    @staticmethod
     def _calculate_next_due(
-        self, last_performed: datetime, interval_value: int, interval_type: str
+        last_performed: datetime, interval_value: int, interval_type: str
     ) -> datetime:
         """Calculate the next date based on last date and interval."""
         if interval_type == "days":
@@ -98,6 +99,9 @@ class HomeMaintenanceSensor(BinarySensorEntity):
                 "interval_type": self.task["interval_type"],
                 "next_due": "unknown",
             }
+            # Include due_time in attributes if available
+            if "due_time" in self.task and self.task["due_time"]:
+                self._attr_extra_state_attributes["due_time"] = self.task["due_time"]
             if self.task["tag_id"]:
                 self._attr_extra_state_attributes["tag_id"] = self.task["tag_id"]
             return
@@ -109,17 +113,31 @@ class HomeMaintenanceSensor(BinarySensorEntity):
         interval_type = self.task["interval_type"]
         due_date = self._calculate_next_due(
             last, interval_value, interval_type
-        ).replace(hour=0, minute=0, second=0, microsecond=0)
-
-        self._attr_is_on = (
-            dt_util.now().replace(hour=0, minute=0, second=0, microsecond=0) >= due_date
         )
+
+        # Apply due_time if available
+        if "due_time" in self.task and self.task["due_time"]:
+            try:
+                hours, minutes = map(int, self.task["due_time"].split(":"))
+                due_date = due_date.replace(hour=hours, minute=minutes, second=0, microsecond=0)
+            except (ValueError, AttributeError):
+                # If due_time is invalid, default to midnight
+                due_date = due_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            # Default to midnight if no due_time
+            due_date = due_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        self._attr_is_on = dt_util.now() >= due_date
         self._attr_extra_state_attributes = {
             "last_performed": self.task["last_performed"],
             "interval_value": self.task["interval_value"],
             "interval_type": self.task["interval_type"],
             "next_due": due_date.isoformat(),
         }
+
+        # Include due_time in attributes if available
+        if "due_time" in self.task and self.task["due_time"]:
+            self._attr_extra_state_attributes["due_time"] = self.task["due_time"]
         if self.task["tag_id"]:
             self._attr_extra_state_attributes["tag_id"] = self.task["tag_id"]
 

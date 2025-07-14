@@ -29,6 +29,7 @@ class HomeMaintenanceTask:
     last_performed: str = attr.ib()
     tag_id: str | None = attr.ib(default=None)
     icon: str | None = attr.ib(default=None)
+    due_time: str | None = attr.ib(default="00:00")
 
 
 class TaskStore:
@@ -148,9 +149,7 @@ class TaskStore:
 
         if performed_date is None:
             performed_date = dt_util.now()
-        performed_date_str = performed_date.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ).isoformat()
+        performed_date_str = performed_date.replace(second=0, microsecond=0).isoformat()
 
         entity.task["last_performed"] = performed_date_str
         task.last_performed = performed_date_str
