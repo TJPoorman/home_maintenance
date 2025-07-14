@@ -49,4 +49,5 @@ export interface Task {
     last_performed: string;
     tag_id?: string;
     icon?: string;
+    due_time?: string;
 }
