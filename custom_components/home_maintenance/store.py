@@ -63,6 +63,36 @@ class TaskStore:
         """Get single task."""
         return attr.asdict(self._tasks.get(task_id))
 
+    def _get_tag_uuids(self) -> dict[str, str]:
+        """Return a mapping of all task's tag friendly IDs into tag UUIDs."""
+        er = entity_registry.async_get(self.hass)
+
+        # Get each task's tag_id, if configured
+        tag_ids = [t.tag_id for t in self._tasks.values() if t.tag_id]
+
+        tag_uuids = {}
+        for tag_id in tag_ids:
+            # If two tasks have the same tag_id, only get the first
+            if tag_id in tag_uuids:
+                continue
+
+            # Get the tag_id -> tag_uuid mapping from entity_registry
+            entry = er.async_get(tag_id)
+            if entry:
+                tag_uuids[tag_id] = entry.unique_id
+
+        return tag_uuids
+
+    def get_by_tag_uuid(self, tag_uuid: str) -> list[dict]:
+        """Get tasks given a tag UUID."""
+        tag_uuids = self._get_tag_uuids()
+
+        return [
+            attr.asdict(t)
+            for t in self._tasks.values()
+            if t.tag_id and tag_uuids.get(t.tag_id) == tag_uuid
+        ]
+
     def get_by_tag_id(self, tag_id: str) -> list[dict]:
         """Get tasks by tag id."""
         return [attr.asdict(t) for t in self._tasks.values() if t.tag_id == tag_id]

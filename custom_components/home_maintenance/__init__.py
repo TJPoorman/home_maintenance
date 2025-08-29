@@ -38,10 +38,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     @callback
     def handle_tag_scanned_event(event: Event) -> None:
         """Handle when a tag is scanned."""
-        tag_id = event.data.get("tag_id")
+        tag_id = event.data.get("tag_id")  # Actually tag UUID
 
         store = hass.data[const.DOMAIN].get("store")
-        tasks = store.get_by_tag_id(tag_id)
+        tasks = store.get_by_tag_uuid(tag_id)
         if not tasks:
             return
 
