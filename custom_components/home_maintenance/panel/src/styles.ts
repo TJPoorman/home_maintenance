@@ -69,6 +69,23 @@ export const commonStyle = css`
         flex-wrap: wrap;
     }
 
+    .form-field.add-task {
+        display: flex;
+        justify-content: flex-end;    
+    }
+
+    .add-task-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;    /* center vertically */
+        border-style: solid;
+        border-width: 1px;
+        border-color: blue;
+        width: 80px;
+        height: 27px;
+        min-width: 30px;
+    }
+
     .form-field,
     ha-textfield,
     ha-select,
