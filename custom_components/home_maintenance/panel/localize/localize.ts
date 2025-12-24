@@ -1,9 +1,11 @@
 import * as en from './languages/en.json';
+import * as de from './languages/de.json'; // German translation
 
 import IntlMessageFormat from 'intl-messageformat';
 
 var languages: any = {
     en: en,
+    de: de, // German translation
 };
 
 export function localize(string: string, language: string, ...args: any[]): string {
