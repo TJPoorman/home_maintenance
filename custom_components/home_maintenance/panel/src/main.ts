@@ -269,7 +269,9 @@ export class HomeMaintenancePanel extends LitElement {
     };
 
     private get _editSchema() {
+        
         return [
+            { name: "title", selector: { text: {} }, },
             { name: "interval_value", required: true, selector: { number: { min: 1, mode: "box" } }, },
             {
                 name: "interval_type",
