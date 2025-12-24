@@ -97,6 +97,7 @@ class HomeMaintenanceSensor(BinarySensorEntity):
                 "interval_value": self.task["interval_value"],
                 "interval_type": self.task["interval_type"],
                 "next_due": "unknown",
+                "description": self.task.get("description"),
             }
             if self.task["tag_id"]:
                 self._attr_extra_state_attributes["tag_id"] = self.task["tag_id"]
@@ -119,6 +120,7 @@ class HomeMaintenanceSensor(BinarySensorEntity):
             "interval_value": self.task["interval_value"],
             "interval_type": self.task["interval_type"],
             "next_due": due_date.isoformat(),
+            "description": self.task.get("description"),
         }
         if self.task["tag_id"]:
             self._attr_extra_state_attributes["tag_id"] = self.task["tag_id"]
