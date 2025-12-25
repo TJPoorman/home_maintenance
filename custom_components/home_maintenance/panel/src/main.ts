@@ -444,6 +444,7 @@ export class HomeMaintenancePanel extends LitElement {
                 @value-changed=${(e: CustomEvent) => this._handleFormValueChanged(e)}
             ></ha-form>
 
+
             <ha-expansion-panel
                 header="${localize('panel.cards.new.sections.optional', this.hass.language)}"
                 .opened=${this._advancedOpen}
@@ -459,8 +460,8 @@ export class HomeMaintenancePanel extends LitElement {
                 ></ha-form>
             </ha-expansion-panel>
 
-            <div class="form-field">
-                <mwc-button @click=${this._handleAddTaskClick}>
+            <div class="form-field add-task">
+                <mwc-button @click=${this._handleAddTaskClick} class="add-task-button">
                     ${localize('panel.cards.new.actions.add_task', this.hass.language)}
                 </mwc-button>
             </div>
