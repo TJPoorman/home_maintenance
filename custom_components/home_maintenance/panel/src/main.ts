@@ -24,6 +24,7 @@ interface TaskFormData {
     icon: string;
     label: string[];
     tag: string;
+    description: string;
 }
 
 export class HomeMaintenancePanel extends LitElement {
@@ -45,6 +46,7 @@ export class HomeMaintenancePanel extends LitElement {
         icon: "",
         label: [],
         tag: "",
+        description: "",
     };
     private _advancedOpen: boolean = false;
 
@@ -58,6 +60,7 @@ export class HomeMaintenancePanel extends LitElement {
         icon: "",
         label: [],
         tag: "",
+        description: "",
     };
 
     // Shared overflow menu state
@@ -233,6 +236,7 @@ export class HomeMaintenancePanel extends LitElement {
                 return next;
             })(),
             tagIcon: (() => task.tag_id && task.tag_id.trim() !== "" ? "mdi:tag" : undefined)(),
+            description: task.description,
         }));
     }
 
@@ -262,6 +266,7 @@ export class HomeMaintenancePanel extends LitElement {
             { name: "icon", selector: { icon: {} }, },
             { name: "label", selector: { label: { multiple: true } }, },
             { name: "tag", selector: { entity: { filter: { domain: "tag" } } }, },
+            { name: "description", selector: { text: {} }, },
         ]
     };
 
@@ -286,6 +291,7 @@ export class HomeMaintenancePanel extends LitElement {
             { name: "icon", selector: { icon: {} }, },
             { name: "label", selector: { label: { multiple: true } }, },
             { name: "tag", selector: { entity: { filter: { domain: "tag" } } }, },
+            { name: "description", selector: { text: { multiline: true } } },
         ]
     };
 
@@ -339,6 +345,7 @@ export class HomeMaintenancePanel extends LitElement {
             icon: "",
             label: [],
             tag: "",
+            description: "",
         };
 
         this.tasks = await loadTasks(this.hass!);
@@ -353,6 +360,7 @@ export class HomeMaintenancePanel extends LitElement {
             icon: "",
             label: [],
             tag: "",
+            description: "",
         };
     }
 
@@ -551,7 +559,7 @@ export class HomeMaintenancePanel extends LitElement {
     }
 
     private async _handleAddTaskClick() {
-        const { title, interval_value, interval_type, last_performed, tag, icon, label } = this._formData;
+        const { title, interval_value, interval_type, last_performed, tag, icon, label, description } = this._formData;
 
         if (!title?.trim() || !interval_value || !interval_type) {
             const msg = localize("panel.cards.new.alerts.required", this.hass!.language);
@@ -567,6 +575,7 @@ export class HomeMaintenancePanel extends LitElement {
             tag_id: tag?.trim() || undefined,
             icon: icon?.trim() || "mdi:calendar-check",
             labels: label ?? [],
+            description,
         };
 
         try {
@@ -605,6 +614,7 @@ export class HomeMaintenancePanel extends LitElement {
                 icon: task.icon ?? "",
                 label: labels.map((l) => l.label_id),
                 tag: task.tag_id ?? "",
+                description: task.description,
             };
 
             await this.updateComplete;

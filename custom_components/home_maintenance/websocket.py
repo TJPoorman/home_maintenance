@@ -12,6 +12,8 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 from .store import HomeMaintenanceTask
 
+//_LOGGER = logging.getLogger(__name__)
+
 
 @callback
 def websocket_get_tasks(
@@ -40,6 +42,7 @@ def websocket_add_task(
 ) -> None:
     """Add a new task."""
     store = hass.data[DOMAIN].get("store")
+    //_LOGGER.warning("DEBUG: msg content is %s", msg)
 
     last_str = msg["last_performed"]
     if last_str:
@@ -66,6 +69,7 @@ def websocket_add_task(
         last_performed=last_performed,
         tag_id=msg.get("tag_id"),
         icon=msg.get("icon"),
+        description=msg.get("description"),
     )
 
     labels = msg.get("labels", [])
@@ -187,6 +191,7 @@ async def async_register_websockets(hass: HomeAssistant) -> None:
                 vol.Optional("tag_id"): str,
                 vol.Optional("icon"): str,
                 vol.Optional("labels"): [str],
+                vol.Optional("description"): vol.Any(str, None),
             }
         ),
     )

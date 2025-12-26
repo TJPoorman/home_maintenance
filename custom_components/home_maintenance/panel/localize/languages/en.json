@@ -38,6 +38,9 @@
                     },
                     "label": {
                         "heading": "Label(s)"
+                    },
+                    "description": {
+                        "heading": "Description"
                     }
                 },
                 "sections": {

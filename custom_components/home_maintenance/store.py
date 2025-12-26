@@ -29,6 +29,7 @@ class HomeMaintenanceTask:
     last_performed: str = attr.ib()
     tag_id: str | None = attr.ib(default=None)
     icon: str | None = attr.ib(default=None)
+    description: str = attr.ib(default=None)
 
 
 class TaskStore:
@@ -101,6 +102,8 @@ class TaskStore:
         self, task: HomeMaintenanceTask, labels: list[str] | None = None
     ) -> str | None:
         """Add new task."""
+        _LOGGER.info("Neuer Task wird angelegt: %s", attr.asdict(task))
+        
         add_entities = self.hass.data[const.DOMAIN].get("add_entities")
         if not add_entities:
             msg = "add_entities not registered yet."
