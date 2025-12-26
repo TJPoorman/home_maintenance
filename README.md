@@ -59,13 +59,14 @@ Download the <a href="https://github.com/TJPoorman/home_maintenance/releases">la
 ## 🛠️ How to Use
 
 - Open **Home Maintenance** from the Home Assistant sidebar.
-- To add a new task enter:
-  - A title (e.g., “Clean Dryer Vent”)
-  - How often it needs to be done
-  - Select the interval period (Defaults to days)
-  - The last time you did it (Optional. If omitted will be today)
-  - Select an NFC tag (Optional. Will mark the task complete when scanned)
-  - Select an icon (Optional)
+- To add a new task, enter:
+  - Task Title: A title, e.g. “Clean Dryer Vent”
+  - Interval (integer): How often it needs to be done 
+  - Interval Type (selector): Select the interval period; days (default), weeks, months
+  - Last Performed (optional): The last time you did it (default: today)
+  - Icon (optional): Select an icon
+  - Label (optional): add label
+  - Tag (optional): select an NFC tag; will mark the task complete when scanned
   - Click **Add Task**
 - Tasks will show if they are due or overdue
 - Click **Complete** to reset the Last Performed date to today
