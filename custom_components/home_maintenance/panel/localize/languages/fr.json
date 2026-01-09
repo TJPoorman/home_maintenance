@@ -1,0 +1,28 @@
+{
+  "config": {
+    "flow_title": "Home Maintenance",
+    "step": {
+      "user": {
+        "title": "Configurer Home Maintenance",
+        "description": "Installation de l'intégration Home Maintenance.",
+        "data": {
+          "admin_only": "Restreindre l'accès aux administrateurs.",
+          "sidebar_title": "Nom de l'intégration dans la barre latérale."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Seule une instance de Home Maintenance est autorisée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "admin_only": "Restreindre l'accès aux administrateurs.",
+          "sidebar_title": "Nom de l'intégration dans la barre latérale."
+        }
+      }
+    }
+  }
+}

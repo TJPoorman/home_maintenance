@@ -1,0 +1,102 @@
+{
+    "common": {
+        "loading": "Chargement...",
+        "none": "Aucune",
+        "no_tasks": "Aucune tâche trouvée."
+    },
+    "intervals": {
+        "day": "Jour",
+        "days": "Jours",
+        "week": "Semaine",
+        "weeks": "Semaines",
+        "month": "Mois",
+        "months": "Mois"
+    },
+    "panel": {
+        "cards": {
+            "new": {
+                "title": "Créer une nouvelle Tâche",
+                "fields": {
+                    "title": {
+                        "heading": "Titre de la Tâche"
+                    },
+                    "interval_value": {
+                        "heading": "Intervale"
+                    },
+                    "interval_type": {
+                        "heading": "Type d'Intervale"
+                    },
+                    "last_performed": {
+                        "heading": "Dernière exécution",
+                        "helper": "Laisser vide pour utiliser la date du jour"
+                    },
+                    "tag": {
+                        "heading": "Tag"
+                    },
+                    "icon": {
+                        "heading": "Icône"
+                    },
+                    "label": {
+                        "heading": "Étiquette(s)"
+                    }
+                },
+                "sections": {
+                    "optional": "Paramètres optionnels"
+                },
+                "actions": {
+                    "add_task": "Ajouter Tâche"
+                },
+                "alerts": {
+                    "required": "Please fill all fields",
+                    "error": "Erreur lors de l'ajout de la Tâche. Consulter la console pour plus de détails."
+                }
+            },
+            "current": {
+                "title": "Tâches actuelles",
+                "no_items": "Aucune tâche trouvée.",
+                "every": "tous les",
+                "last": "Dernière réalisation",
+                "next": "Prochaine échéance",
+                "actions": {
+                    "complete": "Valider",
+                    "edit": "Modifier",
+                    "remove": "Supprimer"
+                },
+                "confirm_remove": "Êtes-vous sûr(e) de vouloir supprimer cette Tâche?"
+            }
+        },
+        "dialog": {
+            "edit_task": {
+                "title": "Modifier Tâche",
+                "fields": {
+                    "interval_value": {
+                        "heading": "Intervale"
+                    },
+                    "interval_type": {
+                        "heading": "Type d'Intervale"
+                    },
+                    "last_performed": {
+                        "heading": "Dernière exécution",
+                        "helper": "Laisser vide pour utiliser la date du jour"
+                    },
+                    "tag": {
+                        "heading": "Tag"
+                    },
+                    "icon": {
+                        "heading": "Icône"
+                    },
+                    "label": {
+                        "heading": "Étiquette(s)"
+                    }
+                },
+                "sections": {
+                    "optional": "Paramètres optionnels"
+                },
+                "actions": {
+                    "cancel": "Annuler",
+                    "save": "Sauvegarder"
+                }
+            }
+        }
+    }
+}
