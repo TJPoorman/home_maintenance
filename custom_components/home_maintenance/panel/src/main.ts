@@ -460,9 +460,9 @@ export class HomeMaintenancePanel extends LitElement {
             </ha-expansion-panel>
 
             <div class="form-field">
-                <mwc-button @click=${this._handleAddTaskClick}>
+                <ha-button @click=${this._handleAddTaskClick}>
                     ${localize('panel.cards.new.actions.add_task', this.hass.language)}
-                </mwc-button>
+                </ha-button>
             </div>
         `;
     }
@@ -511,12 +511,12 @@ export class HomeMaintenancePanel extends LitElement {
                     @value-changed=${(e: CustomEvent) => this._handleEditFormValueChanged(e)}
                 ></ha-form>
 
-                <mwc-button slot="secondaryAction" @click=${() => (this._editingTaskId = null)}>
+                <ha-button appearance="plain" slot="secondaryAction" @click=${() => (this._editingTaskId = null)}>
                     ${localize('panel.dialog.edit_task.actions.cancel', this.hass.language)}
-                </mwc-button>
-                <mwc-button slot="primaryAction" @click=${this._handleSaveEditClick}>
+                </ha-button>
+                <ha-button appearance="accent" slot="primaryAction" @click=${this._handleSaveEditClick}>
                     ${localize('panel.dialog.edit_task.actions.save', this.hass.language)}
-                </mwc-button>
+                </ha-button>
             </ha-dialog>
         `;
     }
