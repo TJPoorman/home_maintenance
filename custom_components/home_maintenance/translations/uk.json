@@ -1,0 +1,28 @@
+{
+  "config": {
+    "flow_title": "Home Maintenance",
+    "step": {
+      "user": {
+        "title": "Налаштування Home Maintenance",
+        "description": "Налаштуйте інтеграцію Home Maintenance.",
+        "data": {
+          "admin_only": "Обмежити панель тільки для адміністраторів",
+          "sidebar_title": "Назва інтеграції в бічній панелі."
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Дозволено лише один екземпляр інтеграції Home Maintenance."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "admin_only": "Обмежити панель тільки для адміністраторів",
+          "sidebar_title": "Назва інтеграції в бічній панелі."
+        }
+      }
+    }
+  }
+}
