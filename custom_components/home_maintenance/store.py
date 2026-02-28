@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = f"{const.DOMAIN}.storage"
 STORAGE_VERSION_MAJOR = 1
-STORAGE_VERSION_MINOR = 1
+STORAGE_VERSION_MINOR = 2
 
 
 @attr.s(slots=True)
@@ -29,6 +29,13 @@ class HomeMaintenanceTask:
     last_performed: str = attr.ib()
     tag_id: str | None = attr.ib(default=None)
     icon: str | None = attr.ib(default=None)
+    trigger_type: str = attr.ib(default="time")
+    count_entity_id: str | None = attr.ib(default=None)
+    count_threshold: int = attr.ib(default=0)
+    current_count: int = attr.ib(default=0)
+    runtime_entity_id: str | None = attr.ib(default=None)
+    runtime_threshold: float = attr.ib(default=0)
+    runtime_baseline: float = attr.ib(default=0)
 
 
 class TaskStore:
@@ -50,6 +57,16 @@ class TaskStore:
         data = await self._store.async_load()
         if data is None:
             return
+
+        for task_data in data:
+            # Backward compatibility: add defaults for new fields
+            task_data.setdefault("trigger_type", "time")
+            task_data.setdefault("count_entity_id", None)
+            task_data.setdefault("count_threshold", 0)
+            task_data.setdefault("current_count", 0)
+            task_data.setdefault("runtime_entity_id", None)
+            task_data.setdefault("runtime_threshold", 0)
+            task_data.setdefault("runtime_baseline", 0)
 
         self._tasks = {
             task_data["id"]: HomeMaintenanceTask(**task_data) for task_data in data
@@ -197,6 +214,67 @@ class TaskStore:
 
         entity.task["last_performed"] = performed_date_str
         task.last_performed = performed_date_str
+
+        # Reset counter for count-based tasks when marked complete
+        if task.trigger_type == "count":
+            task.current_count = 0
+            entity.task["current_count"] = 0
+
+        # Update runtime baseline for runtime-based tasks
+        if task.trigger_type == "runtime" and task.runtime_entity_id:
+            state = self.hass.states.get(task.runtime_entity_id)
+            if state and state.state not in ("unknown", "unavailable"):
+                try:
+                    current_value = float(state.state)
+                    task.runtime_baseline = current_value
+                    entity.task["runtime_baseline"] = current_value
+                except (ValueError, TypeError):
+                    pass
+
+        self.hass.async_create_task(entity.async_update_ha_state(force_refresh=True))
+        self._save()
+
+    def increment_count(self, task_id: str) -> None:
+        """Increment the count for a count-based task."""
+        entity = self.hass.data[const.DOMAIN]["entities"].get(task_id)
+        task = self._tasks.get(task_id)
+
+        if entity is None or task is None:
+            msg = "Task not found."
+            raise RuntimeError(msg)
+
+        if task.trigger_type != "count":
+            return
+
+        task.current_count += 1
+        entity.task["current_count"] = task.current_count
+        self.hass.async_create_task(entity.async_update_ha_state(force_refresh=True))
+        self._save()
+
+    def update_runtime_baseline(self, task_id: str, new_baseline: float) -> None:
+        """Update the runtime baseline for a runtime-based task."""
+        entity = self.hass.data[const.DOMAIN]["entities"].get(task_id)
+        task = self._tasks.get(task_id)
+
+        if entity is None or task is None:
+            return
+
+        task.runtime_baseline = new_baseline
+        entity.task["runtime_baseline"] = new_baseline
+        self.hass.async_create_task(entity.async_update_ha_state(force_refresh=True))
+        self._save()
+
+    def reset_count(self, task_id: str) -> None:
+        """Reset the count for a count-based task without completing it."""
+        entity = self.hass.data[const.DOMAIN]["entities"].get(task_id)
+        task = self._tasks.get(task_id)
+
+        if entity is None or task is None:
+            msg = "Task not found."
+            raise RuntimeError(msg)
+
+        task.current_count = 0
+        entity.task["current_count"] = 0
         self.hass.async_create_task(entity.async_update_ha_state(force_refresh=True))
         self._save()
 

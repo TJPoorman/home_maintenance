@@ -17,3 +17,29 @@ reset_last_performed:
       example: "2025-06-01"
       selector:
         date:
+
+increment_count:
+  name: Increment Count
+  description: >
+    Increments the usage counter for a count-based maintenance task.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The ID of the count-based task entity to increment.
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
+
+reset_count:
+  name: Reset Count
+  description: >
+    Resets the usage counter for a count-based maintenance task to zero without marking it as completed.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The ID of the count-based task entity to reset the counter for.
+      required: true
+      selector:
+        entity:
+          domain: binary_sensor
