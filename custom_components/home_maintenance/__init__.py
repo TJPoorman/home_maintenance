@@ -7,6 +7,7 @@ from typing import cast
 from homeassistant.components.binary_sensor import DOMAIN as PLATFORM
 from homeassistant.components.tag.const import EVENT_TAG_SCANNED
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EVENT_STATE_CHANGED
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -90,6 +91,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unsub = hass.bus.async_listen(EVENT_TAG_SCANNED, handle_tag_scanned_event)
     hass.data[const.DOMAIN]["unsub_tag_scanned"] = unsub
 
+    # Set up state change listeners for count-based tasks
+    setup_count_listeners(hass, task_store)
+
+    # Set up state change listeners for runtime-based tasks
+    setup_runtime_listeners(hass, task_store)
+
     return True
 
 
@@ -101,6 +108,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if "unsub_tag_scanned" in hass.data[const.DOMAIN]:
         hass.data[const.DOMAIN]["unsub_tag_scanned"]()
+
+    # Unsubscribe count listeners
+    for unsub in hass.data[const.DOMAIN].get("unsub_count_listeners", []):
+        unsub()
+
+    # Unsubscribe runtime listeners
+    for unsub in hass.data[const.DOMAIN].get("unsub_runtime_listeners", []):
+        unsub()
 
     async_unregister_panel(hass)
     hass.data.pop(const.DOMAIN, None)
@@ -157,3 +172,130 @@ def register_services(hass: HomeAssistant) -> None:
         async_srv_reset,
         schema=const.SERVICE_RESET_SCHEMA,
     )
+
+    async def async_srv_increment_count(call: ServiceCall) -> None:
+        entity_id = call.data["entity_id"]
+        entity_registry = er.async_get(hass)
+        entry = cast("RegistryEntry", entity_registry.async_get(entity_id))
+        task_id = entry.unique_id
+        store = hass.data[const.DOMAIN].get("store")
+        store.increment_count(task_id)
+
+    hass.services.async_register(
+        const.DOMAIN,
+        const.SERVICE_INCREMENT_COUNT,
+        async_srv_increment_count,
+        schema=const.SERVICE_INCREMENT_COUNT_SCHEMA,
+    )
+
+    async def async_srv_reset_count(call: ServiceCall) -> None:
+        entity_id = call.data["entity_id"]
+        entity_registry = er.async_get(hass)
+        entry = cast("RegistryEntry", entity_registry.async_get(entity_id))
+        task_id = entry.unique_id
+        store = hass.data[const.DOMAIN].get("store")
+        store.reset_count(task_id)
+
+    hass.services.async_register(
+        const.DOMAIN,
+        const.SERVICE_RESET_COUNT,
+        async_srv_reset_count,
+        schema=const.SERVICE_RESET_COUNT_SCHEMA,
+    )
+
+
+@callback
+def setup_count_listeners(hass: HomeAssistant, task_store: TaskStore) -> None:
+    """Set up state change listeners for count-based tasks.
+
+    Uses a single listener that dynamically reads the current task list,
+    so it handles tasks added/updated after setup.
+    """
+    # Remove old listeners if any
+    for unsub in hass.data[const.DOMAIN].get("unsub_count_listeners", []):
+        unsub()
+
+    @callback
+    def handle_state_change(event: Event) -> None:
+        """Handle state change for counted entities."""
+        entity_id = event.data.get("entity_id")
+        old_state = event.data.get("old_state")
+        new_state = event.data.get("new_state")
+
+        if old_state is None or new_state is None:
+            return
+
+        # Only count transitions to "on" state
+        if new_state.state != "on" or old_state.state == "on":
+            return
+
+        store = hass.data[const.DOMAIN].get("store")
+        if not store:
+            return
+
+        for task_data in store.get_all():
+            if (
+                task_data.get("trigger_type") == "count"
+                and task_data.get("count_entity_id") == entity_id
+            ):
+                _LOGGER.debug(
+                    "Count increment for task %s (entity %s turned on)",
+                    task_data["id"],
+                    entity_id,
+                )
+                store.increment_count(task_data["id"])
+
+    unsub = hass.bus.async_listen(EVENT_STATE_CHANGED, handle_state_change)
+    hass.data[const.DOMAIN]["unsub_count_listeners"] = [unsub]
+
+
+@callback
+def setup_runtime_listeners(hass: HomeAssistant, task_store: TaskStore) -> None:
+    """Set up state change listeners for runtime-based tasks."""
+    for unsub in hass.data[const.DOMAIN].get("unsub_runtime_listeners", []):
+        unsub()
+
+    @callback
+    def handle_runtime_state_change(event: Event) -> None:
+        """Handle state change for runtime entities."""
+        entity_id = event.data.get("entity_id")
+        new_state = event.data.get("new_state")
+
+        if new_state is None:
+            return
+
+        store = hass.data[const.DOMAIN].get("store")
+        if not store:
+            return
+
+        for task_data in store.get_all():
+            if (
+                task_data.get("trigger_type") == "runtime"
+                and task_data.get("runtime_entity_id") == entity_id
+            ):
+                try:
+                    current_value = float(new_state.state)
+                except (ValueError, TypeError):
+                    continue
+
+                runtime_baseline = task_data.get("runtime_baseline", 0)
+
+                # Detect external reset
+                if current_value < runtime_baseline:
+                    _LOGGER.debug(
+                        "Runtime reset detected for task %s (value %s < baseline %s)",
+                        task_data["id"],
+                        current_value,
+                        runtime_baseline,
+                    )
+                    store.update_runtime_baseline(task_data["id"], 0)
+                else:
+                    # Just refresh the entity state
+                    entity = hass.data[const.DOMAIN]["entities"].get(task_data["id"])
+                    if entity:
+                        hass.async_create_task(
+                            entity.async_update_ha_state(force_refresh=True)
+                        )
+
+    unsub = hass.bus.async_listen(EVENT_STATE_CHANGED, handle_runtime_state_change)
+    hass.data[const.DOMAIN]["unsub_runtime_listeners"] = [unsub]

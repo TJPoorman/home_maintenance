@@ -41,6 +41,8 @@ export interface EntityRegistryEntry {
     labels: string[];
 }
 
+export type TriggerType = "time" | "count" | "runtime";
+
 export interface Task {
     id: string;
     title: string;
@@ -49,4 +51,11 @@ export interface Task {
     last_performed: string;
     tag_id?: string;
     icon?: string;
+    trigger_type?: TriggerType;
+    count_entity_id?: string;
+    count_threshold?: number;
+    current_count?: number;
+    runtime_entity_id?: string;
+    runtime_threshold?: number;
+    runtime_baseline?: number;
 }

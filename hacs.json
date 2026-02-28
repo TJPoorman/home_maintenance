@@ -1,9 +1,6 @@
 {
-    "name": "Home Maintenance",
-    "homeassistant": "2025.5.0",
-    "hacs": "2.0.5",
-    "render_readme": true,
-    "zip_release": true,
-    "filename": "home_maintenance.zip",
-    "hide_default_branch": true
+    "name":  "Home Maintenance",
+    "hacs":  "2.0.5",
+    "render_readme":  true,
+    "homeassistant":  "2025.5.0"
 }

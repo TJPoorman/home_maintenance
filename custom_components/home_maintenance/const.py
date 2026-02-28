@@ -30,6 +30,20 @@ SERVICE_RESET_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_INCREMENT_COUNT = "increment_count"
+SERVICE_INCREMENT_COUNT_SCHEMA = vol.Schema(
+    {
+        vol.Required("entity_id"): cv.entity_id,
+    }
+)
+
+SERVICE_RESET_COUNT = "reset_count"
+SERVICE_RESET_COUNT_SCHEMA = vol.Schema(
+    {
+        vol.Required("entity_id"): cv.entity_id,
+    }
+)
+
 CONFIG_STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Optional("admin_only", default=True): cv.boolean,
