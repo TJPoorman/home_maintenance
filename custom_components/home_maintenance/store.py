@@ -29,6 +29,7 @@ class HomeMaintenanceTask:
     last_performed: str = attr.ib()
     tag_id: str | None = attr.ib(default=None)
     icon: str | None = attr.ib(default=None)
+    area_id: str | None = attr.ib(default=None)
 
 
 class TaskStore:
@@ -121,6 +122,20 @@ class TaskStore:
         self.hass.data[const.DOMAIN]["entities"][task.id] = entity
         self._save()
 
+        # Set area_id on the entity if provided
+        if task.area_id:
+            er = entity_registry.async_get(self.hass)
+            entity_entry = next(
+                (
+                    entry
+                    for entry in er.entities.values()
+                    if entry.unique_id == task.id and entry.platform == const.DOMAIN
+                ),
+                None,
+            )
+            if entity_entry:
+                er.async_update_entity(entity_entry.entity_id, area_id=task.area_id)
+
         return entity.unique_id
 
     def delete(self, task_id: str) -> None:
@@ -166,6 +181,16 @@ class TaskStore:
             tag_id = updated["tag_id"]
             task.tag_id = tag_id if tag_id else None
             entity.task["tag_id"] = tag_id if tag_id else None
+
+        if "area_id" in updated:
+            area_id = updated["area_id"]
+            task.area_id = area_id if area_id else None
+            registry = entity_registry.async_get(self.hass)
+            if registry.async_get(entity.entity_id):
+                registry.async_update_entity(
+                    entity.entity_id,
+                    area_id=area_id or None,
+                )
 
         if "labels" in updated:
             registry = entity_registry.async_get(self.hass)

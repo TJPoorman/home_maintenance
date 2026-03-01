@@ -66,6 +66,7 @@ def websocket_add_task(
         last_performed=last_performed,
         tag_id=msg.get("tag_id"),
         icon=msg.get("icon"),
+        area_id=msg.get("area_id"),
     )
 
     labels = msg.get("labels", [])
@@ -187,6 +188,7 @@ async def async_register_websockets(hass: HomeAssistant) -> None:
                 vol.Optional("tag_id"): str,
                 vol.Optional("icon"): str,
                 vol.Optional("labels"): [str],
+                vol.Optional("area_id"): vol.Any(str, None),
             }
         ),
     )

@@ -129,7 +129,11 @@ class HomeMaintenanceSensor(BinarySensorEntity):
 
     async def async_added_to_hass(self) -> None:
         """Run when entity is added to Home Assistant."""
+        registry = er.async_get(self.hass)
         if self._labels:
-            registry = er.async_get(self.hass)
             if registry.async_get(self.entity_id):
                 registry.async_update_entity(self.entity_id, labels=set(self._labels))
+        area_id = self.task.get("area_id")
+        if area_id:
+            if registry.async_get(self.entity_id):
+                registry.async_update_entity(self.entity_id, area_id=area_id)

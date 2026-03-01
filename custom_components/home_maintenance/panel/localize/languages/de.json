@@ -38,6 +38,9 @@
                     },
                     "label": {
                         "heading": "Bezeichnung(en)"
+                    },
+                    "area": {
+                        "heading": "Bereich"
                     }
                 },
                 "sections": {
@@ -87,6 +90,9 @@
                     },
                     "label": {
                         "heading": "Bezeichnung(en)"
+                    },
+                    "area": {
+                        "heading": "Bereich"
                     }
                 },
                 "sections": {
