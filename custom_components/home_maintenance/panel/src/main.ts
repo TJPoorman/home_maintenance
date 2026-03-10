@@ -63,6 +63,11 @@ export class HomeMaintenancePanel extends LitElement {
     // Shared overflow menu state
     @state() private _selectedTaskId: string | null = null;
     @query("#actions-menu") private _actionsMenu?: any;
+    private _openingMenu: boolean = false;
+
+    @state() private _tableRows: any[] = [];
+    private _columnsCache: any;
+    private _columnsCacheNarrow: boolean | undefined;
 
     private get _columns() {
         return {
@@ -184,15 +189,20 @@ export class HomeMaintenancePanel extends LitElement {
     };
 
     private get _columnsToDisplay() {
-        return Object.fromEntries(
+        if (this._columnsCache && this._columnsCacheNarrow === this.narrow) {
+            return this._columnsCache;
+        }
+        this._columnsCacheNarrow = this.narrow;
+        this._columnsCache = Object.fromEntries(
             Object.entries(this._columns).filter(([_, col]) =>
                 this.narrow ? col.showNarrow !== false : true
             )
         );
+        return this._columnsCache;
     }
 
-    private get _rows() {
-        return this.tasks.map((task: Task) => ({
+    private _computeTableRows(tasks: Task[]): any[] {
+        return tasks.map((task: Task) => ({
             icon: task.icon,
             id: task.id,
             title: task.title,
@@ -321,13 +331,20 @@ export class HomeMaintenancePanel extends LitElement {
         }
     }
 
-    private async loadData() {
+    private async connect() {
         await loadConfigDashboard();
-        this.tags = await loadTags(this.hass!);
-        this.tasks = await loadTasks(this.hass!);
         this.config = await getConfig(this.hass!);
         this.registry = await loadRegistryEntries(this.hass!);
         this.labelRegistry = await loadLabelRegistry(this.hass!);
+        await this.loadData();
+    }
+
+    private async loadData() {
+        const tags = await loadTags(this.hass!);
+        const tasks = await loadTasks(this.hass!);
+        this.tags = tags;
+        this.tasks = tasks;
+        this._tableRows = this._computeTableRows(tasks);
     }
 
     private async resetForm() {
@@ -341,7 +358,7 @@ export class HomeMaintenancePanel extends LitElement {
             tag: "",
         };
 
-        this.tasks = await loadTasks(this.hass!);
+        await this.loadData();
     }
 
     private async resetEditForm() {
@@ -387,7 +404,7 @@ export class HomeMaintenancePanel extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.loadData();
+        this.connect();
     }
 
     render() {
@@ -460,9 +477,9 @@ export class HomeMaintenancePanel extends LitElement {
             </ha-expansion-panel>
 
             <div class="form-field">
-                <mwc-button @click=${this._handleAddTaskClick}>
+                <ha-button @click=${this._handleAddTaskClick}>
                     ${localize('panel.cards.new.actions.add_task', this.hass.language)}
-                </mwc-button>
+                </ha-button>
             </div>
         `;
     }
@@ -479,7 +496,7 @@ export class HomeMaintenancePanel extends LitElement {
                 <ha-data-table
                     .hass=${this.hass}
                     .columns=${this._columnsToDisplay}
-                    .data=${this._rows}
+                    .data=${this._tableRows}
                     .narrow=${this.narrow}
                     auto-height
                     id="tasks-table"
@@ -499,7 +516,7 @@ export class HomeMaintenancePanel extends LitElement {
         return html`
             <ha-dialog
                 open
-                heading="${localize('panel.dialog.edit_task.title', this.hass.language)}: ${this._editFormData.title}"
+                header-title="${localize('panel.dialog.edit_task.title', this.hass.language)}: ${this._editFormData.title}"
                 @closed=${this._handleDialogClosed}
             >
                 <ha-form
@@ -511,12 +528,14 @@ export class HomeMaintenancePanel extends LitElement {
                     @value-changed=${(e: CustomEvent) => this._handleEditFormValueChanged(e)}
                 ></ha-form>
 
-                <mwc-button slot="secondaryAction" @click=${() => (this._editingTaskId = null)}>
-                    ${localize('panel.dialog.edit_task.actions.cancel', this.hass.language)}
-                </mwc-button>
-                <mwc-button slot="primaryAction" @click=${this._handleSaveEditClick}>
-                    ${localize('panel.dialog.edit_task.actions.save', this.hass.language)}
-                </mwc-button>
+                <ha-dialog-footer slot="footer">
+                    <ha-button slot="secondaryAction" appearance="plain" @click=${() => (this._editingTaskId = null)}>
+                        ${localize('panel.dialog.edit_task.actions.cancel', this.hass.language)}
+                    </ha-button>
+                    <ha-button slot="primaryAction" @click=${this._handleSaveEditClick}>
+                        ${localize('panel.dialog.edit_task.actions.save', this.hass.language)}
+                    </ha-button>
+                </ha-dialog-footer>
             </ha-dialog>
         `;
     }
@@ -525,28 +544,23 @@ export class HomeMaintenancePanel extends LitElement {
         if (!this.hass) return html``;
 
         return html`
-            <ha-md-menu id="actions-menu" positioning="fixed">
-                <ha-md-menu-item
-                    @click=${() => {
-                if (this._selectedTaskId) {
-                    this._handleOpenEditDialogClick(this._selectedTaskId);
-                }
-            }}
-                >
+            <ha-dropdown
+                id="actions-menu"
+                @wa-select=${this._handleMenuAction}
+                @wa-after-show=${() => { this._openingMenu = false; }}
+                @wa-after-hide=${() => {
+                    if (this._openingMenu) return;
+                    if (this._actionsMenu) this._actionsMenu.anchorElement = undefined;
+                }}>
+                <ha-dropdown-item value="edit">
                     <ha-svg-icon slot="start" path=${mdiPencil}></ha-svg-icon>
                     ${localize('panel.cards.current.actions.edit', this.hass!.language)}
-                </ha-md-menu-item>
-                <ha-md-menu-item
-                    @click=${() => {
-                if (this._selectedTaskId) {
-                    this._handleRemoveTaskClick(this._selectedTaskId);
-                }
-            }}
-                >
+                </ha-dropdown-item>
+                <ha-dropdown-item value="remove">
                     <ha-svg-icon slot="start" path=${mdiDelete}></ha-svg-icon>
                     ${localize('panel.cards.current.actions.remove', this.hass!.language)}
-                </ha-md-menu-item>
-            </ha-md-menu>
+                </ha-dropdown-item>
+            </ha-dropdown>
         `;
     }
 
@@ -675,6 +689,17 @@ export class HomeMaintenancePanel extends LitElement {
         this._editFormData = { ...this._editFormData, ...ev.detail.value };
     }
 
+    private _handleMenuAction = (ev: CustomEvent) => {
+        const value = ev.detail?.item?.value;
+        if (!this._selectedTaskId) return;
+        if (this._actionsMenu) this._actionsMenu.anchorElement = undefined;
+        if (value === "edit") {
+            this._handleOpenEditDialogClick(this._selectedTaskId);
+        } else if (value === "remove") {
+            this._handleRemoveTaskClick(this._selectedTaskId);
+        }
+    };
+
     private _handleShowMenu(taskId: string, ev: Event) {
         this._selectedTaskId = taskId;
 
@@ -682,8 +707,14 @@ export class HomeMaintenancePanel extends LitElement {
             return;
         }
 
-        this._actionsMenu.anchorElement = ev.currentTarget as HTMLElement;
-        this._actionsMenu.show();
+        if (this._actionsMenu.anchorElement === ev.target) {
+            this._actionsMenu.anchorElement = undefined;
+            return;
+        }
+
+        this._openingMenu = true;
+        this._actionsMenu.anchorElement = ev.target;
+        this._actionsMenu.open = true;
 
         ev.stopPropagation();
     } static styles = commonStyle;
