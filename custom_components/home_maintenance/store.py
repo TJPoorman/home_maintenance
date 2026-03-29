@@ -164,8 +164,8 @@ class TaskStore:
 
         if "tag_id" in updated:
             tag_id = updated["tag_id"]
-            task.tag_id = tag_id if tag_id else None
-            entity.task["tag_id"] = tag_id if tag_id else None
+            task.tag_id = tag_id or None
+            entity.task["tag_id"] = tag_id or None
 
         if "labels" in updated:
             registry = entity_registry.async_get(self.hass)

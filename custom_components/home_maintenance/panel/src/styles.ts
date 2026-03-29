@@ -73,7 +73,12 @@ export const commonStyle = css`
     ha-textfield,
     ha-select,
     ha-icon-picker {
+        text-align: right;
         min-width: 265px;
+    }
+
+    .extras-panel{
+        margin-bottom: 14px;
     }
 
     .filler {

@@ -1,20 +1,33 @@
 #!/usr/bin/env bash
 
-set -e
-
 cd "$(dirname "$0")/.."
 
-# Create config dir if not present
-if [[ ! -d "${PWD}/config" ]]; then
-    mkdir -p "${PWD}/config"
-    hass --config "${PWD}/config" --script ensure_config
+CONFIG_DIR="${PWD}/config"
+CC_SRC="${PWD}/custom_components"
+CC_DST="${CONFIG_DIR}/custom_components"
+VENV_DIR="${PWD}/.venv"
+
+if [[ -f "${VENV_DIR}/bin/activate" ]]; then
+    source "${VENV_DIR}/bin/activate"
+else
+    echo "ERROR: venv not found at ${VENV_DIR}"
+    exit 1
 fi
 
-# Set the path to custom_components
-## This let's us have the structure we want <root>/custom_components/integration_blueprint
-## while at the same time have Home Assistant configuration inside <root>/config
-## without resulting to symlinks.
-export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+if [[ ! -d "${CONFIG_DIR}" ]]; then
+    mkdir -p "${CONFIG_DIR}"
+    hass --config "${CONFIG_DIR}" --script ensure_config
+fi
 
-# Start Home Assistant
-hass --config "${PWD}/config" --debug
+if [[ -L "${CC_DST}" ]]; then
+    echo "custom_components symlink already exists"
+elif [[ -d "${CC_DST}" ]]; then
+    echo "WARNING: ${CC_DST} exists and is not a symlink. Skipping link."
+else
+    ln -s "${CC_SRC}" "${CC_DST}"
+    echo "Created symlink: ${CC_DST} -> ${CC_SRC}"
+fi
+
+export PYTHONPATH="${PYTHONPATH}:${CC_SRC}"
+
+hass --config "${CONFIG_DIR}" --debug

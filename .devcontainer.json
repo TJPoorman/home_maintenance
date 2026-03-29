@@ -1,6 +1,6 @@
 {
     "name": "TJPoorman/home_maintenance",
-    "image": "mcr.microsoft.com/devcontainers/python:3.13",
+    "image": "mcr.microsoft.com/devcontainers/python:3.14",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [
         8123
@@ -29,7 +29,7 @@
                 "files.trimTrailingWhitespace": true,
                 "python.analysis.typeCheckingMode": "basic",
                 "python.analysis.autoImportCompletions": true,
-                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.defaultInterpreterPath": "/workspaces/home_maintenance/.venv/bin/python",
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
                 }
@@ -38,6 +38,9 @@
     },
     "remoteUser": "vscode",
     "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "20"
+        },
         "ghcr.io/devcontainers-extra/features/apt-packages:1": {
             "packages": [
                 "ffmpeg",
